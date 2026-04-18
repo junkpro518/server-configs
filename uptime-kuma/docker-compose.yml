@@ -1,0 +1,37 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma
+    restart: always
+
+    volumes:
+      - uptime-kuma-data:/app/data
+
+    networks:
+      - proxy
+
+    environment:
+      - NODE_ENV=production
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime.rule=Host(`uptime.junkpro.duckdns.org`)"
+      - "traefik.http.routers.uptime.entrypoints=websecure"
+      - "traefik.http.routers.uptime.tls.certresolver=myresolver"
+      - "traefik.http.routers.uptime-http.rule=Host(`uptime.junkpro.duckdns.org`)"
+      - "traefik.http.routers.uptime-http.entrypoints=web"
+      - "traefik.http.routers.uptime-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.services.uptime.loadbalancer.server.port=3001"
+
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  uptime-kuma-data:
+
+networks:
+  proxy:
+    external: true
