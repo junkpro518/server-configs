@@ -1,0 +1,13 @@
+services:
+  ocr-service:
+    image: ocr-service-ocr-service
+    container_name: ocr-service
+    restart: unless-stopped
+    expose:
+      - "5000"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,22 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+    user: "0:0"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    expose:
+      - "6333"
+      - "6334"
+    networks:
+      - proxy
+
+volumes:
+  qdrant_data:
+    external: true
+    name: qdrant_qdrant_data
+
+networks:
+  proxy:
+    external: true
