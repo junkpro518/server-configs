@@ -1,0 +1,72 @@
+services:
+  netdata:
+    image: netdata/netdata:latest
+    container_name: netdata
+    restart: unless-stopped
+    hostname: vmi3161221
+    pid: host
+
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+
+    security_opt:
+      - apparmor:unconfined
+
+    volumes:
+      - netdataconfig:/etc/netdata
+      - netdatalib:/var/lib/netdata
+      - netdatacache:/var/cache/netdata
+      - /:/host/root:ro,rslave
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+      - /var/log:/host/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    environment:
+      - DOCKER_HOST=/var/run/docker.sock
+      - TZ=Asia/Riyadh
+
+    networks:
+      - proxy
+
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 150M
+
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.middlewares.netdata-auth.basicauth.users=admin:$$2y$$05$$JOPeJX8jUlh0uIj8/wQR.OcOwIfPfVwAaHByzVcmMm55F76nik7C."
+      - "traefik.http.middlewares.netdata-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.netdata-http.entrypoints=web"
+      - "traefik.http.routers.netdata-http.rule=Host(`netdata.junkpro.duckdns.org`)"
+      - "traefik.http.routers.netdata-http.middlewares=netdata-redirect"
+      - "traefik.http.routers.netdata.entrypoints=websecure"
+      - "traefik.http.routers.netdata.rule=Host(`netdata.junkpro.duckdns.org`)"
+      - "traefik.http.routers.netdata.tls=true"
+      - "traefik.http.routers.netdata.tls.certresolver=myresolver"
+      - "traefik.http.routers.netdata.middlewares=netdata-auth"
+      - "traefik.http.services.netdata.loadbalancer.server.port=19999"
+
+volumes:
+  netdataconfig:
+  netdatalib:
+  netdatacache:
+
+networks:
+  proxy:
+    external: true
